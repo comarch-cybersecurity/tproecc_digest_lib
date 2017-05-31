@@ -1,0 +1,9 @@
+<!doctype html>
+<html>
+<script src="bundle/digest_lib_bundle.min.js"></script>
+<script>
+    var digest = new TProEccDigest();
+    document.write("supported digests:"+digest.getSupported());
+    document.write(digest.digestUTF8( "KUPYNA-512", "ASDF"));
+</script>
+</html>
