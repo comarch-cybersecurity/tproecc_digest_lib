@@ -29,14 +29,13 @@ var TEST_VECTORS = [{
 function test_digest_lib() {
     var digest = new tProEccDigestLib();
     
-    console.log("supported digests:" + digest.getSupported());
     for (var index in TEST_VECTORS) {
         var testCase = TEST_VECTORS[index];
         console.log("Test:" + (Number(index) + 1) + " of " + testCase.type);
         var result = digest.digestUTF8(testCase.type, testCase.msg);
-        console.log("result  : " + result);
+        console.log("result  : " + JSON.stringify(result));
         console.log("expected: " + testCase.res);
-        if (result !== testCase.res) throw Error("test failed");
+        if (result.digestValue !== testCase.res) throw Error("test failed");
         console.log("ok\n");
     }
 
