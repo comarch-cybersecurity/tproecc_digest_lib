@@ -1,9 +1,9 @@
 <!doctype html>
 <html>
-<script src="bundle/digest_lib_bundle.min.js"></script>
+<script src="bundle/digest_lib_bundle-1.0.2.min.js"></script>
 <script>
     var digest = new TProEccDigest();
-    document.write("supported digests:"+digest.getSupported());
-    document.write(digest.digestUTF8( "KUPYNA-512", "ASDF"));
+    document.write(JSON.stringify(digest.digestUTF8("KUPYNA_512", "ASDF")));
 </script>
+
 </html>
