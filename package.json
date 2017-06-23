@@ -1,6 +1,6 @@
 {
   "name": "tproecc_digest_lib",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "digest library",
   "main": "digest_test.js",
   "dependencies": {
@@ -8,7 +8,7 @@
   },
   "repository" :
   { "type" : "git"
-  , "url" : "https://github.com/sowagregory/tproecc_digest_lib.git"
+  , "url" : "https://github.com/comarch-cybersecurity/tproecc_digest_lib"
   },
   "devDependencies": {
     "browserify": "latest",
