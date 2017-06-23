@@ -1,7 +1,7 @@
 {
   "name": "tproecc_digest_lib",
-  "version": "1.0.3",
-  "description": "digest library",
+  "version": "1.0.4",
+  "description": "tProEcc device digest library",
   "main": "digest_test.js",
   "dependencies": {
      "js-sha3": "^0.5.7"
