@@ -1,4 +1,6 @@
+/*jslint node: true */
 'use strict';
+
 var TAB = require("./kupyna_tables");
 
 function KupynaTransLong() {}
@@ -144,7 +146,7 @@ KupynaTransLong.G1 = function (x, y, round) {
         TAB.T4H[x.hi[0] & 0xff] ^ TAB.T5H[(x.hi[15] >> 8) & 0xff] ^ TAB.T6H[(x.hi[14] >> 16) & 0xff] ^ TAB.T7H[(x.hi[9] >> 24) & 0xff];
 
     y.lo[4] = TAB.T0L[x.lo[4] & 0xff] ^ TAB.T1L[(x.lo[3] >> 8) & 0xff] ^ TAB.T2L[(x.lo[2] >> 16) & 0xff] ^ TAB.T3L[(x.lo[1] >> 24) & 0xff] ^
-        TAB.T4L[x.hi[0] & 0xff] ^ TAB.T5L[(x.hi[15] >> 8) & 0xff] ^ TAB.T6L[(x.hi[14] >> 16) & 0xff] ^ TAB.T7L[(x.hi[9] >> 24) & 0xff] ^ (4 << 4) ^ round
+        TAB.T4L[x.hi[0] & 0xff] ^ TAB.T5L[(x.hi[15] >> 8) & 0xff] ^ TAB.T6L[(x.hi[14] >> 16) & 0xff] ^ TAB.T7L[(x.hi[9] >> 24) & 0xff] ^ (4 << 4) ^ round;
 
     y.hi[5] = TAB.T0H[x.lo[5] & 0xff] ^ TAB.T1H[(x.lo[4] >> 8) & 0xff] ^ TAB.T2H[(x.lo[3] >> 16) & 0xff] ^ TAB.T3H[(x.lo[2] >> 24) & 0xff] ^
         TAB.T4H[x.hi[1] & 0xff] ^ TAB.T5H[(x.hi[0] >> 8) & 0xff] ^ TAB.T6H[(x.hi[15] >> 16) & 0xff] ^ TAB.T7H[(x.hi[10] >> 24) & 0xff];

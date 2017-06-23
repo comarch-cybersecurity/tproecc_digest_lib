@@ -6,7 +6,7 @@ var KupynaTransLong = require('./kupyna_trans_long');
 var LongArrBuffer = require('./longarr_buffer');
 var KupynaTables = require('./kupyna_tables');
 
-function showHex(value) {
+function _showHex(value) {
     if (value < 0) {
         value = 0xFFFFFFFF + value + 1;
     }
@@ -15,10 +15,10 @@ function showHex(value) {
     process.stdout.write(hex);
 }
 
-function showLongArray(arr) {
+function _showLongArray(arr) {
     for (var i = 0; i < arr.lo.length; i++) {
-        showHex(arr.hi[i]);
-        showHex(arr.lo[i]);
+        _showHex(arr.hi[i]);
+        _showHex(arr.lo[i]);
         process.stdout.write("\n");
     }
     process.stdout.write("\n");

@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var tProEccDigestLib = require("./tproecc_digest_lib");
 
 var TEST_VECTORS = [{

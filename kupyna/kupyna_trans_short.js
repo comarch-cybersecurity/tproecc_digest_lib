@@ -1,5 +1,6 @@
-// dla 256 bitów -> dla 512 inna implementacja -> zamiast 7 jest 15
+/*jslint node: true */
 'use strict';
+
 var TAB = require("./kupyna_tables");
 
 function KupynaTransShort() {}

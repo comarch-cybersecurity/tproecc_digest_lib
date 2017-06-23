@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var sha3_lib = require('js-sha3');
 var kupyna_lib = require('./kupyna/kupyna');
 
@@ -17,7 +20,7 @@ TProEccDigest.prototype._arrToHex = function (arr) {
 
 TProEccDigest.prototype.getSupportedDigests = function () {
     return ["SHA3_256", "SHA3_384", "SHA3_512", "KUPYNA_256", "KUPYNA_384", "KUPYNA_512"];
-}
+};
 
 TProEccDigest.prototype.isDigestSupported = function (digestType) {
     var supported = this.getSupportedDigests();
@@ -25,7 +28,7 @@ TProEccDigest.prototype.isDigestSupported = function (digestType) {
         if (digestType === supported[type]) return true;
     }
     return false;
-}
+};
 
 TProEccDigest.prototype.digest = function (type, message) {
     if (message.constructor !== Array) {

@@ -1,3 +1,4 @@
+/*jslint node: true */
 'use strict';
 
 function LongArrBuffer(sizeInLongs) {
@@ -15,7 +16,7 @@ function LongArrBuffer(sizeInLongs) {
   this.longArr2ByteArr();
 }
 
-LongArrBuffer.prototype.showHexByteArr = function () {
+LongArrBuffer.prototype._showHexByteArr = function () {
   for (var index = 0; index < this.byteArr.length; index++) {
     this.showHexByte(this.byteArr[index]);
     if (index % 8 === 7) {
@@ -25,7 +26,7 @@ LongArrBuffer.prototype.showHexByteArr = function () {
   console.log();
 };
 
-LongArrBuffer.prototype.showHexByte = function (byteToShow) {
+LongArrBuffer.prototype._showHexByte = function (byteToShow) {
   var hex = Number(byteToShow).toString(16);
   if (hex.length < 2) {
     hex = "0" + hex;
@@ -42,7 +43,7 @@ LongArrBuffer.prototype.showHexLong = function (longToShow) {
   process.stdout.write(hex);
 };
 
-LongArrBuffer.prototype.showHexLongArr = function () {
+LongArrBuffer.prototype._showHexLongArr = function () {
   for (var i = 0; i < this.longArr.lo.length; i++) {
     this.showHexLong(this.longArr.hi[i]);
     this.showHexLong(this.longArr.lo[i]);
@@ -112,7 +113,7 @@ LongArrBuffer.prototype.zeroAll = function () {
   }
   this.notifyLongUpdated();
   this.longArr2ByteArr();
-}
+};
 
 LongArrBuffer.prototype.zeroBytes = function (startPos, len) {
   this.longArr2ByteArr();
