@@ -22,21 +22,21 @@ TProEccDigest.prototype._arrToHex = function (arr) {
 };
 
 TProEccDigest.prototype.getSupportedDigests = function () {
-    return this._SUPPORTED_DIGESTS;
+    return TProEccDigest._SUPPORTED_DIGESTS;
 };
 
 TProEccDigest.prototype.isDigestSupported = function (digestType) {
-    for (var type in this._SUPPORTED_DIGESTS) {
-        if (digestType === this._SUPPORTED_DIGESTS[type]) return true;
+    for (var type in TProEccDigest._SUPPORTED_DIGESTS) {
+        if (digestType === TProEccDigest._SUPPORTED_DIGESTS[type]) return true;
     }
     return false;
 };
 
 TProEccDigest.prototype.getDigestLen = function (digestType) {
    if (!this.isDigestSupported(digestType)) throw Error("unsupported digest type:" + digestType);
-   for (var type in this._SUPPORTED_DIGESTS) {
-        if (digestType === this._SUPPORTED_DIGESTS[type]) 
-        return this._DIGESTS_LEN[type];
+   for (var type in TProEccDigest._SUPPORTED_DIGESTS) {
+        if (digestType === TProEccDigest._SUPPORTED_DIGESTS[type]) 
+        return TProEccDigest._DIGESTS_LEN[type];
     }
 };
 
