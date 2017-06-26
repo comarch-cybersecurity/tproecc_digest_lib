@@ -6,6 +6,9 @@ var kupyna_lib = require('./kupyna/kupyna');
 
 function TProEccDigest() {}
 
+TProEccDigest._SUPPORTED_DIGESTS = ["SHA3_256", "SHA3_384", "SHA3_512", "KUPYNA_256", "KUPYNA_384", "KUPYNA_512"];
+TProEccDigest._DIGESTS_LEN = [32, 48, 64, 32, 48, 64];
+
 TProEccDigest.prototype._arrToHex = function (arr) {
     var result = "";
     for (var i = 0; i < arr.length; i++) {
@@ -19,15 +22,22 @@ TProEccDigest.prototype._arrToHex = function (arr) {
 };
 
 TProEccDigest.prototype.getSupportedDigests = function () {
-    return ["SHA3_256", "SHA3_384", "SHA3_512", "KUPYNA_256", "KUPYNA_384", "KUPYNA_512"];
+    return this._SUPPORTED_DIGESTS;
 };
 
 TProEccDigest.prototype.isDigestSupported = function (digestType) {
-    var supported = this.getSupportedDigests();
-    for (var type in supported) {
-        if (digestType === supported[type]) return true;
+    for (var type in this._SUPPORTED_DIGESTS) {
+        if (digestType === this._SUPPORTED_DIGESTS[type]) return true;
     }
     return false;
+};
+
+TProEccDigest.prototype.getDigestLen = function (digestType) {
+   if (!this.isDigestSupported(digestType)) throw Error("unsupported digest type:" + digestType);
+   for (var type in this._SUPPORTED_DIGESTS) {
+        if (digestType === this._SUPPORTED_DIGESTS[type]) 
+        return this._DIGESTS_LEN[type];
+    }
 };
 
 TProEccDigest.prototype.digest = function (type, message) {
