@@ -6,24 +6,11 @@ var KupynaTransLong = require('./kupyna_trans_long');
 var LongArrBuffer = require('./longarr_buffer');
 var KupynaTables = require('./kupyna_tables');
 
-function _showHex(value) {
-    if (value < 0) {
-        value = 0xFFFFFFFF + value + 1;
-    }
-    var hex = Number(value).toString(16);
-    hex = "00000000".substr(0, 8 - hex.length) + hex;
-    process.stdout.write(hex);
-}
-
-function _showLongArray(arr) {
-    for (var i = 0; i < arr.lo.length; i++) {
-        _showHex(arr.hi[i]);
-        _showHex(arr.lo[i]);
-        process.stdout.write("\n");
-    }
-    process.stdout.write("\n");
-}
-
+/**
+ * Creates kupyna hashing object
+ * @param {Number} hashBits - number of kupyna hash output bits
+ * @public
+ */
 function Kupyna(hashBits) {
     if (hashBits !== 256 && hashBits !== 384 && hashBits !== 512) {
         throw new Error("expected hash len: 512|384|256");
@@ -55,7 +42,14 @@ function Kupyna(hashBits) {
     }
 }
 
-Kupyna.prototype.P = function (x, y, round) {
+/**
+ * Calculates value of P transformation
+ * @param {Number} x - first argument to transform
+ * @param {Number} y - second argument to transform
+ * @param {Number} round - number of transformation round
+ * @private
+ */
+Kupyna.prototype._P = function (x, y, round) {
     for (var index = 0; index < this.stateLen; ++index) {
         x.lo[index] ^= (index << 4) ^ round;
     }
@@ -63,7 +57,14 @@ Kupyna.prototype.P = function (x, y, round) {
     this.kupynaTrans.G(y, x);
 };
 
-Kupyna.prototype.Q = function (x, y, round) {
+/**
+ * Calculates value of Q transformation
+ * @param {Number} x - first argument to transform
+ * @param {Number} y - second argument to transform
+ * @param {Number} round - number of transformation round
+ * @private
+ */
+Kupyna.prototype._Q = function (x, y, round) {
     for (var index = 0; index < this.stateLen; index++) {
         var addHi = 0x00f0f0f0 ^ ((((this.stateLen - 1 - index) * 16) ^ round) << 24);
         var result = KupynaTables.addLong(x.hi[index], x.lo[index], addHi, 0xf0f0f0f3);
@@ -74,7 +75,11 @@ Kupyna.prototype.Q = function (x, y, round) {
     this.kupynaTrans.G(y, x);
 };
 
-Kupyna.prototype.transform = function () {
+/**
+ * Applies internal state transformations
+ * @private
+ */
+Kupyna.prototype._transform = function () {
     var AQ1 = {
         hi: [],
         lo: []
@@ -96,8 +101,8 @@ Kupyna.prototype.transform = function () {
     }
 
     for (var r = 0; r < this.numRounds; r += 2) {
-        this.P(AP1, tmp, r);
-        this.Q(AQ1, tmp, r);
+        this._P(AP1, tmp, r);
+        this._Q(AQ1, tmp, r);
     }
 
     for (column = 0; column < this.stateLen; column++) {
@@ -107,6 +112,50 @@ Kupyna.prototype.transform = function () {
     this.hashState.notifyLongUpdated();
 };
 
+/**
+ * Applies final state transformation.
+ * @private
+ */
+Kupyna.prototype._outputTransform = function () {
+    var t1 = {
+            lo: [],
+            hi: []
+        },
+        t2 = {
+            lo: [],
+            hi: []
+        };
+    for (var index = 0; index < this.stateLen; index++) {
+        t1.hi[index] = this.hashState.longArr.hi[index];
+        t1.lo[index] = this.hashState.longArr.lo[index];
+    }
+    for (var round = 0; round < this.numRounds; round += 2) {
+        this._P(t1, t2, round);
+    }
+    for (var column = 0; column < this.stateLen; ++column) {
+        this.hashState.longArr.hi[column] ^= t1.hi[column];
+        this.hashState.longArr.lo[column] ^= t1.lo[column];
+    }
+    this.hashState.notifyLongUpdated();
+};
+
+/**
+ * Extracts hash from internal state table.
+ * @return {Array} extracted hash
+ * @private
+ */
+
+Kupyna.prototype._extractHash = function () {
+    var hash = [];
+    this.hashState.copyBytesFrom(this.stateLenBytes - this.hashBits / 8, hash, 0, this.hashBits / 8);
+    return hash;
+};
+
+/**
+ * Reinitialize hashing object to its clear state.
+ * Allows to digest new data.
+ * @public
+ */
 Kupyna.prototype.init = function () {
     this.total = 0;
     this.memStatePos = 0;
@@ -116,6 +165,11 @@ Kupyna.prototype.init = function () {
     this.initialized = true;
 };
 
+/**
+ * Updates hash with new piece of data.
+ * @param {Array} data - bunch of data to be hashed
+ * @public
+ */
 Kupyna.prototype.update = function (data) {
     if(!this.initialized)
     {
@@ -135,14 +189,14 @@ Kupyna.prototype.update = function (data) {
 
     if (this.memStatePos > 0 && this.memStatePos + len >= this.stateLenBytes) {
         this.memState.copyBytesTo(data, dataPos, this.memStatePos, this.stateLenBytes - this.memStatePos);
-        this.transform();
+        this._transform();
         len -= this.stateLenBytes - this.memStatePos;
         dataPos += this.stateLenBytes - this.memStatePos;
         this.memStatePos = 0;
     }
     while (len >= this.stateLenBytes) {
         this.memState.copyBytesTo(data, dataPos, 0, this.stateLenBytes);
-        this.transform();
+        this._transform();
         len -= this.stateLenBytes;
         dataPos += this.stateLenBytes;
     }
@@ -153,49 +207,27 @@ Kupyna.prototype.update = function (data) {
     this.total += data.length * 8;
 };
 
-Kupyna.prototype.extractHash = function () {
-    var hash = [];
-    this.hashState.copyBytesFrom(this.stateLenBytes - this.hashBits / 8, hash, 0, this.hashBits / 8);
-    return hash;
-};
+/**
+ * Calculates final result of complete data provided to update method.
+ * @return {Array} calculated final hash 
+ * @public
+ */
 
 Kupyna.prototype.digest = function () {
     this.memState.setByte(this.memStatePos, 0x80);
     this.memStatePos++;
     if (this.memStatePos > this.stateLenBytes - 12) {
         this.memState.zeroBytes(this.memStatePos, this.stateLenBytes - this.memStatePos);
-        this.transform();
+        this._transform();
         this.memStatePos = 0;
     }
     this.memState.zeroBytes(this.memStatePos, this.stateLenBytes - this.memStatePos);
     this.memState.setLong(this.stateLenBytes - 12, this.total);
-    this.transform();
-    this.outputTransform();
+    this._transform();
+    this._outputTransform();
     this.initialized = false;
-    return this.extractHash();
+    return this._extractHash();
 };
 
-Kupyna.prototype.outputTransform = function () {
-    var t1 = {
-            lo: [],
-            hi: []
-        },
-        t2 = {
-            lo: [],
-            hi: []
-        };
-    for (var index = 0; index < this.stateLen; index++) {
-        t1.hi[index] = this.hashState.longArr.hi[index];
-        t1.lo[index] = this.hashState.longArr.lo[index];
-    }
-    for (var round = 0; round < this.numRounds; round += 2) {
-        this.P(t1, t2, round);
-    }
-    for (var column = 0; column < this.stateLen; ++column) {
-        this.hashState.longArr.hi[column] ^= t1.hi[column];
-        this.hashState.longArr.lo[column] ^= t1.lo[column];
-    }
-    this.hashState.notifyLongUpdated();
-};
 
 module.exports = Kupyna;
