@@ -10,7 +10,7 @@ KupynaTransLong.G2 = function (x, y, round) {
 
     for (var index = 0; index < 16; index++) {
         var addHi = 0x00f0f0f0 ^ ((((15 - index) * 16) ^ round) << 24);
-        var result = TAB.addLong(y.hi[index], y.lo[index], addHi, 0xf0f0f0f3);
+        var result = TAB.addLongLong(y.hi[index], y.lo[index], addHi, 0xf0f0f0f3);
         y.hi[index] = result.hi;
         y.lo[index] = result.lo;
     }

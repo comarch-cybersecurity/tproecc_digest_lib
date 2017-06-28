@@ -3,7 +3,7 @@
 
 var KupynaTransShort = require('./kupyna_trans_short');
 var KupynaTransLong = require('./kupyna_trans_long');
-var LongArrBuffer = require('./longarr_buffer');
+var LongLongBuffer = require('./longlong_buffer');
 var KupynaTables = require('./kupyna_tables');
 
 /**
@@ -21,8 +21,8 @@ function Kupyna(hashBits) {
 
     switch (hashBits) {
         case 256:
-            this.memState = new LongArrBuffer(8);
-            this.hashState = new LongArrBuffer(8);
+            this.memState = new LongLongBuffer(8);
+            this.hashState = new LongLongBuffer(8);
             this.kupynaTrans = KupynaTransShort;
             this.numRounds = 10;
             this.stateLen = 8;
@@ -31,8 +31,8 @@ function Kupyna(hashBits) {
             break;
         case 384:
         case 512:
-            this.memState = new LongArrBuffer(16);
-            this.hashState = new LongArrBuffer(16);
+            this.memState = new LongLongBuffer(16);
+            this.hashState = new LongLongBuffer(16);
             this.kupynaTrans = KupynaTransLong;
             this.numRounds = 14;
             this.stateLen = 16;
@@ -67,7 +67,7 @@ Kupyna.prototype._P = function (x, y, round) {
 Kupyna.prototype._Q = function (x, y, round) {
     for (var index = 0; index < this.stateLen; index++) {
         var addHi = 0x00f0f0f0 ^ ((((this.stateLen - 1 - index) * 16) ^ round) << 24);
-        var result = KupynaTables.addLong(x.hi[index], x.lo[index], addHi, 0xf0f0f0f3);
+        var result = KupynaTables.addLongLong(x.hi[index], x.lo[index], addHi, 0xf0f0f0f3);
         x.hi[index] = result.hi;
         x.lo[index] = result.lo;
     }
