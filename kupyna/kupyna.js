@@ -222,7 +222,7 @@ Kupyna.prototype.digest = function () {
         this.memStatePos = 0;
     }
     this.memState.zeroBytes(this.memStatePos, this.stateLenBytes - this.memStatePos);
-    this.memState.setLong(this.stateLenBytes - 12, this.total);
+    this.memState.setLongAsBytes(this.stateLenBytes - 12, this.total);
     this._transform();
     this._outputTransform();
     this.initialized = false;

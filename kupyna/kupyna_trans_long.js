@@ -3,6 +3,9 @@
 
 var TAB = require("./kupyna_tables");
 
+/**
+ * Creates transformation object for Kupyna-384 and Kupyna-512 algorithm
+ */
 function KupynaTransLong() {}
 
 KupynaTransLong.G2 = function (x, y, round) {

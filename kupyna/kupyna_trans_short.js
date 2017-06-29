@@ -3,6 +3,9 @@
 
 var TAB = require("./kupyna_tables");
 
+/**
+ * Creates transformation precomputed object for Kupyna-256 algorithm
+ */
 function KupynaTransShort() {}
 
 KupynaTransShort.G2 = function (x, y, round) {

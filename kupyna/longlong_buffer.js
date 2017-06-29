@@ -5,10 +5,14 @@
 /**
  * LongLongBuffer implements fixed size buffer (size defined at construction time), 
  * which allows to access data in form of both byte and 64-bit long values simultanously.
- * Any changes done by methods accesing data as longs eg. setLong are 
- * reflected in byte representation and vice versa.
+ * Any changes done by byte oriented access methods are reflected in 64 bit long representation.
  * 
+ * If you want to read/set long data directly - use longArr property. 
+ * Each 64 bit value is divided into 32 MSB longArr.hi subarray and 32 LSB longArr.lo subarrays.
+ * This is done to the fact, that precise representation of integer value in javascript is limited to number up to 2^51.
+ * If this value is exceeded, integer is switched to non precise double representation.
  * 
+ * In case of having access to data casted to bytes, please use object methods.
  *  
  */
 
@@ -26,8 +30,8 @@ function LongLongBuffer(sizeInLongs) {
     this.longArr.lo[index] = 0;
     this.longArr.hi[index] = 0;
   }
-  this.byteArr = [];
-
+  this._byteArr = [];
+  this.sizeInLongs = sizeInLongs;
   this.longArrUpdated = true;
   this._longArr2ByteArr();
 }
@@ -39,8 +43,8 @@ function LongLongBuffer(sizeInLongs) {
 LongLongBuffer.prototype._byteArr2LongArr = function () {
   var start = 0;
   for (var longIndex = 0; longIndex < this.longArr.lo.length; longIndex++) {
-    this.longArr.lo[longIndex] = (this.byteArr[start + 3] << 24) | (this.byteArr[start + 2] << 16) | (this.byteArr[start + 1] << 8) | this.byteArr[start];
-    this.longArr.hi[longIndex] = (this.byteArr[start + 7] << 24) | (this.byteArr[start + 6] << 16) | (this.byteArr[start + 5] << 8) | this.byteArr[start + 4];
+    this.longArr.lo[longIndex] = (this._byteArr[start + 3] << 24) | (this._byteArr[start + 2] << 16) | (this._byteArr[start + 1] << 8) | this._byteArr[start];
+    this.longArr.hi[longIndex] = (this._byteArr[start + 7] << 24) | (this._byteArr[start + 6] << 16) | (this._byteArr[start + 5] << 8) | this._byteArr[start + 4];
     start += 8;
   }
 };
@@ -50,6 +54,9 @@ LongLongBuffer.prototype._byteArr2LongArr = function () {
  * @private
  */
 LongLongBuffer.prototype._longArr2ByteArr = function () {
+  if( this.longArr.lo.length > this.sizeInLongs ||
+  this.longArr.hi.length > this.sizeInLongs ) throw Error( "modified initial length of long long array");
+  
   if (!this.longArrUpdated) {
     return;
   }
@@ -58,8 +65,8 @@ LongLongBuffer.prototype._longArr2ByteArr = function () {
     var tempLo = this.longArr.lo[longIndex];
     var tempHi = this.longArr.hi[longIndex];
     for (var byteIndex = 0; byteIndex < 4; byteIndex++) {
-      this.byteArr[start] = tempLo & 0xff;
-      this.byteArr[start + 4] = tempHi & 0xff;
+      this._byteArr[start] = tempLo & 0xff;
+      this._byteArr[start + 4] = tempHi & 0xff;
       start++;
       tempLo >>= 8;
       tempHi >>= 8;
@@ -86,7 +93,9 @@ LongLongBuffer.prototype._long2ByteArr = function (longValue) {
 
 /**
  * Notifies, that long array content has been updated.
- * Byte array representation needs to be updated on access.
+ * If you changed 64 bit long data accessing longArr object property,
+ * this methods needs to be called to ensure internal integrity between
+ * byte and 64-bit long representation. 
  * @public
  */
 LongLongBuffer.prototype.notifyLongUpdated = function () {
@@ -106,7 +115,7 @@ LongLongBuffer.prototype.copyBytesTo = function (src, srcPos, dstPos, len) {
   for (var index = 0; index < len; index++) {
     var srcByte = src[srcPos + index];
     if (srcByte < 0 || srcByte > 255) throw new Error("array should contain only bytes - pos:" + index + " value:" + srcByte);
-    this.byteArr[dstPos + index] = src[srcPos + index];
+    this._byteArr[dstPos + index] = src[srcPos + index];
   }
   this._byteArr2LongArr();
 };
@@ -122,21 +131,21 @@ LongLongBuffer.prototype.copyBytesTo = function (src, srcPos, dstPos, len) {
 LongLongBuffer.prototype.copyBytesFrom = function (srcPos, dst, dstPos, len) {
   this._longArr2ByteArr();
   for (var index = 0; index < len; index++) {
-    dst[index + dstPos] = this.byteArr[index + srcPos];
+    dst[index + dstPos] = this._byteArr[index + srcPos];
   }
 };
 
 /**
- * Sets value of particular byte in the long array buffer
- * @param {Integer} bytePos - location of long array buffer (indexed in bytes)
+ * Sets value of particular byte in the buffer
+ * @param {Integer} bytePos - location of buffer to be change (indexed in bytes)
  * @param {Integer} byteValue - value to be set
  * @public
  */
 LongLongBuffer.prototype.setByte = function (bytePos, byteValue) {
   this._longArr2ByteArr();
-   if (byteValue < 0 || byteValue > 255) throw new Error("byteValue is not byte");
-  
-  this.byteArr[bytePos] = byteValue;
+  if (byteValue < 0 || byteValue > 255) throw new Error("byteValue is not byte");
+
+  this._byteArr[bytePos] = byteValue;
   this._byteArr2LongArr();
 };
 
@@ -161,16 +170,19 @@ LongLongBuffer.prototype.zeroAll = function () {
 LongLongBuffer.prototype.zeroBytes = function (startPos, len) {
   this._longArr2ByteArr();
   for (var index = 0; index < len; index++) {
-    this.byteArr[index + startPos] = 0;
+    this._byteArr[index + startPos] = 0;
   }
   this._byteArr2LongArr();
 };
 
 /**
- * Sets long value inside buffer
- * @param {Number} pos
+ * Sets long (32 bit) value inside buffer. Four bytes starting from pos location will be set.
+ * @param {Number} pos - start location of 32-bit long value to be changed (indexed in bytes)
+ * @param {Number} longValue - 32-bit long value to be set
  */
-LongLongBuffer.prototype.setLong = function (pos, longValue) {
+LongLongBuffer.prototype.setLongAsBytes = function (pos, longValue) {
+  if (longValue < 0 || longValue > 0xffff)
+    throw new Error("invalid 32 bit long value:" + longValue);
   var tempArr = this._long2ByteArr(longValue);
   this.copyBytesTo(tempArr, 0, pos, tempArr.length);
 };

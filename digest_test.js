@@ -39,7 +39,7 @@ function test_digest_lib() {
         console.log("result  : " + JSON.stringify(result));
         console.log("expected: " + testCase.res);
         if (result.digestValue !== testCase.res) throw Error("test failed");
-        console.log("digest len:"+digest.getDigestLen(testCase.type));
+        console.log("digest len:" + digest.getDigestLen(testCase.type));
         console.log("ok\n");
     }
 }
