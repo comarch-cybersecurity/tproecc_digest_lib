@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "node digest_test.js",
-    "build-min": "cross-var \"browserify lib/tproecc_digest_lib.js --s TProEccDigest | cross-var uglifyjs -c -m > ./bundle/digest_lib_bundle-$npm_package_version.min.js\""
+    "build-min": "cross-var \"browserify tproecc_digest_lib.js --s TProEccDigest | cross-var uglifyjs -c -m > ./bundle/digest_lib_bundle-$npm_package_version.min.js\""
   },
   "author": "Comarch Technologies",
   "license": "proprietary commercial"
