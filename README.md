@@ -1,5 +1,5 @@
 # tProEcc Digest Lib
-code version 1.0.11
+code version 1.0.12
 
 ## Introduction
 

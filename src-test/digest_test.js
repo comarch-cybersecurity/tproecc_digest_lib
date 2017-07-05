@@ -1,7 +1,7 @@
 /*jslint node: true */
 'use strict';
 
-var tProEccDigestLib = require("../bundle/tproecc_digest_lib_bundle-1.0.11.js");
+var tProEccDigestLib = require("../bundle/tproecc_digest_lib_bundle-1.0.12.js");
 
 var TEST_VECTORS = [{
         type: "KUPYNA_256",
