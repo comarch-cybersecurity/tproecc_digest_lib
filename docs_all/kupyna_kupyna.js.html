@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: kupyna/kupyna.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: kupyna/kupyna.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*jslint node: true, esversion:6 */
+'use strict';
+
+var KupynaTransShort = require('./kupyna_trans_short');
+var KupynaTransLong = require('./kupyna_trans_long');
+var LongLongBuffer = require('./longlong_buffer');
+//var KupynaTables = require('./kupyna_tables');
+
+/**
+ * Kupyna class allows for calculating Kupyna type digest as defined in 
+ * Ukrainian DSTU 7564:2014 standard.
+ * @private
+ */
+class Kupyna {
+    /**
+     * Creates kupyna hashing object
+     * @param {Number} hashBits - number of kupyna hash output bits
+     * @public
+     */
+    constructor(hashBits) {
+        if (hashBits !== 256 &amp;&amp; hashBits !== 384 &amp;&amp; hashBits !== 512) {
+            throw new Error("expected hash len: 512|384|256");
+        }
+        this.memStatePos = 0;
+        this.total = 0;
+        this.initialized = false;
+
+        switch (hashBits) {
+            case 256:
+                this.memState = new LongLongBuffer(8);
+                this.hashState = new LongLongBuffer(8);
+                this.kupynaTrans = new KupynaTransShort();
+                this.numRounds = 10;
+                this.stateLen = 8;
+                this.stateLenBytes = 64;
+                this.hashBits = 256;
+                break;
+            case 384:
+            case 512:
+                this.memState = new LongLongBuffer(16);
+                this.hashState = new LongLongBuffer(16);
+                this.kupynaTrans = new KupynaTransLong();
+                this.numRounds = 14;
+                this.stateLen = 16;
+                this.stateLenBytes = 128;
+                this.hashBits = hashBits;
+                break;      
+        }
+    }
+
+    /**
+     * Calculates value of P transformation
+     * @param {Number} x - first argument to transform
+     * @param {Number} y - second argument to transform
+     * @param {Number} round - number of transformation round
+     * @private
+     */
+    _P(x, y, round) {
+        for (var index = 0; index &lt; this.stateLen; ++index) {
+            x.lo[index] ^= (index &lt;&lt; 4) ^ round;
+        }
+        this.kupynaTrans.G1(x, y, round + 1);
+        this.kupynaTrans.G(y, x);
+    }
+
+    /**
+     * Calculates value of Q transformation
+     * @param {Number} x - first argument to transform
+     * @param {Number} y - second argument to transform
+     * @param {Number} round - number of transformation round
+     * @private
+     */
+    _Q(x, y, round) {
+        for (var index = 0; index &lt; this.stateLen; index++) {
+            var addHi = 0x00f0f0f0 ^ ((((this.stateLen - 1 - index) * 16) ^ round) &lt;&lt; 24);
+            var result = this.kupynaTrans.addLongLong(x.hi[index], x.lo[index], addHi, 0xf0f0f0f3);
+            x.hi[index] = result.hi;
+            x.lo[index] = result.lo;
+        }
+        this.kupynaTrans.G2(x, y, round + 1);
+        this.kupynaTrans.G(y, x);
+    }
+
+    /**
+     * Applies internal state transformations
+     * @private
+     */
+    _transform() {
+        var AQ1 = {
+            hi: [],
+            lo: []
+        };
+        var AP1 = {
+            hi: [],
+            lo: []
+        };
+        var tmp = {
+            hi: [],
+            lo: []
+        };
+
+        for (var column = 0; column &lt; this.stateLen; column++) {
+            AP1.hi[column] = this.hashState.longArr.hi[column] ^ this.memState.longArr.hi[column];
+            AP1.lo[column] = this.hashState.longArr.lo[column] ^ this.memState.longArr.lo[column];
+            AQ1.hi[column] = this.memState.longArr.hi[column];
+            AQ1.lo[column] = this.memState.longArr.lo[column];
+        }
+
+        for (var r = 0; r &lt; this.numRounds; r += 2) {
+            this._P(AP1, tmp, r);
+            this._Q(AQ1, tmp, r);
+        }
+
+        for (column = 0; column &lt; this.stateLen; column++) {
+            this.hashState.longArr.hi[column] ^= AP1.hi[column] ^ AQ1.hi[column];
+            this.hashState.longArr.lo[column] ^= AP1.lo[column] ^ AQ1.lo[column];
+        }
+        this.hashState.notifyLongUpdated();
+    }
+
+    /**
+     * Applies final state transformation.
+     * @private
+     */
+    _outputTransform() {
+        var t1 = {
+                lo: [],
+                hi: []
+            },
+            t2 = {
+                lo: [],
+                hi: []
+            };
+        for (var index = 0; index &lt; this.stateLen; index++) {
+            t1.hi[index] = this.hashState.longArr.hi[index];
+            t1.lo[index] = this.hashState.longArr.lo[index];
+        }
+        for (var round = 0; round &lt; this.numRounds; round += 2) {
+            this._P(t1, t2, round);
+        }
+        for (var column = 0; column &lt; this.stateLen; ++column) {
+            this.hashState.longArr.hi[column] ^= t1.hi[column];
+            this.hashState.longArr.lo[column] ^= t1.lo[column];
+        }
+        this.hashState.notifyLongUpdated();
+    }
+
+    /**
+     * Extracts hash from internal state table.
+     * @return {Array} extracted hash
+     * @private
+     */
+    _extractHash() {
+        var hash = [];
+        this.hashState.copyBytesFrom(this.stateLenBytes - this.hashBits / 8, hash, 0, this.hashBits / 8);
+        return hash;
+    }
+
+    /**
+     * Reinitialize hashing object to its clear state.
+     * Allows to digest new data.
+     * @public
+     */
+    init() {
+        this.total = 0;
+        this.memStatePos = 0;
+        this.hashState.zeroAll();
+        this.memState.zeroAll();
+        this.hashState.setByte(0, this.stateLenBytes);
+        this.initialized = true;
+    }
+
+    /**
+     * Updates the digest with new piece of dat.
+     * @param {Array} data - bunch of data to update hash with
+     * @public
+     */
+    update(data) {
+        if (!this.initialized) {
+            throw new Error("need to call Kupyna.init() before");
+        }
+        if (data.constructor !== Array) {
+            throw new Error("update expects array of bytes");
+        }
+        for (var index = 0; index &lt; data.length; index++) {
+            var temp = data[index];
+            if (temp &lt; 0 || temp > 255) {
+                throw new Error("data must be byte array of utf8 elements");
+            }
+        }
+        var len = data.length;
+        var dataPos = 0;
+
+        if (this.memStatePos > 0 &amp;&amp; this.memStatePos + len >= this.stateLenBytes) {
+            this.memState.copyBytesTo(data, dataPos, this.memStatePos, this.stateLenBytes - this.memStatePos);
+            this._transform();
+            len -= this.stateLenBytes - this.memStatePos;
+            dataPos += this.stateLenBytes - this.memStatePos;
+            this.memStatePos = 0;
+        }
+        while (len >= this.stateLenBytes) {
+            this.memState.copyBytesTo(data, dataPos, 0, this.stateLenBytes);
+            this._transform();
+            len -= this.stateLenBytes;
+            dataPos += this.stateLenBytes;
+        }
+        if (len > 0) {
+            this.memState.copyBytesTo(data, dataPos, this.memStatePos, len);
+            this.memStatePos += len;
+        }
+        this.total += data.length * 8;
+    }
+
+    /**
+     * Calculates final result of complete data provided to update method.
+     * @return {Array} calculated final hash 
+     * @public
+     */
+    digest() {
+        this.memState.setByte(this.memStatePos, 0x80);
+        this.memStatePos++;
+        if (this.memStatePos > this.stateLenBytes - 12) {
+            this.memState.zeroBytes(this.memStatePos, this.stateLenBytes - this.memStatePos);
+            this._transform();
+            this.memStatePos = 0;
+        }
+        this.memState.zeroBytes(this.memStatePos, this.stateLenBytes - this.memStatePos);
+        this.memState.setLongAsBytes(this.stateLenBytes - 12, this.total);
+        this._transform();
+        this._outputTransform();
+        this.initialized = false;
+        return this._extractHash();
+    }
+}
+
+module.exports = Kupyna;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Kupyna.html">Kupyna</a></li><li><a href="KupynaTrans.html">KupynaTrans</a></li><li><a href="KupynaTransLong.html">KupynaTransLong</a></li><li><a href="KupynaTransShort.html">KupynaTransShort</a></li><li><a href="LongLongBuffer.html">LongLongBuffer</a></li><li><a href="TProEccDigest.html">TProEccDigest</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed Jul 05 2017 17:58:10 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
