@@ -24,8 +24,7 @@
   "scripts": {
     "clean": "./node_modules/.bin/rimraf lib",
     "test": "node src-test/digest_test.js",
-    "docs": "./node_modules/.bin/jsdoc -r src README.md -d docs",
-    "docs-all": "./node_modules/.bin/jsdoc src -r src README.md -d docs_all --private",
+    "docs": "./node_modules/.bin/jsdoc src -r src README.md -d docs --private",
    
     "babel": "./node_modules/.bin/babel src --out-dir lib --presets=es2015",
     "build": "./node_modules/.bin/babel src --out-dir lib --presets=es2015 --source-maps inline &&  cross-var \"browserify lib/tproecc_digest_lib.js --s TProEccDigest > ./bundle/tproecc_digest_lib_bundle-$npm_package_version.js"
