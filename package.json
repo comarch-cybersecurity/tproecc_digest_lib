@@ -1,6 +1,6 @@
 {
   "name": "tproecc_digest_lib",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "tProEcc device digest library",
   "main": "digest_test.js",
   "dependencies": {
@@ -22,7 +22,7 @@
      "rimraf": "^2.6.1"
   },
   "scripts": {
-    "clean": "./node_modules/.bin/rimraf docs lib bundle/*",
+    "clean": "./node_modules/.bin/rimraf lib",
     "test": "node src-test/digest_test.js",
     "docs": "./node_modules/.bin/jsdoc -r src README.md -d docs",
     "docs-all": "./node_modules/.bin/jsdoc src -r src README.md -d docs_all --private",
