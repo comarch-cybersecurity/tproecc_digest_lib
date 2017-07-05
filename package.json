@@ -4,20 +4,26 @@
   "description": "tProEcc device digest library",
   "main": "digest_test.js",
   "dependencies": {
-     "js-sha3": "^0.5.7"
+    "js-sha3": "^0.5.7"
   },
-  "repository" :
-  { "type" : "git"
-  , "url" : "https://github.com/comarch-cybersecurity/tproecc_digest_lib"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/comarch-cybersecurity/tproecc_digest_lib"
   },
   "devDependencies": {
+    "babel-core": "^6.25.0",
     "browserify": "latest",
-    "cross-var" : "latest",
+    "cross-var": "latest",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "jsdoc": "^3.4.3",
     "uglify-js": "^3.0.20"
   },
   "scripts": {
     "test": "node digest_test.js",
-    "build-min": "cross-var \"browserify tproecc_digest_lib.js --s TProEccDigest | cross-var uglifyjs -c -m > ./bundle/digest_lib_bundle-$npm_package_version.min.js\""
+    "docs": "./node_modules/.bin/jsdoc *.js kupyna/*.js -d docs",
+    "babel" : "./node_modules/.bin/babel src --out-dir lib --presets=es2015",
+    "build-min": "./node_modules/.bin/babel src --out-dir lib --presets=es2015 && cross-var \"browserify lib/tproecc_digest_lib.js --s TProEccDigest | cross-var uglifyjs -c -m > ./bundle/tproecc_digest_lib_bundle-$npm_package_version.min.js\""
   },
   "author": "Comarch Technologies",
   "license": "proprietary commercial"
