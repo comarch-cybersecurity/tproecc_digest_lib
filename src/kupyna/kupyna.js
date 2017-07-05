@@ -9,6 +9,7 @@ var LongLongBuffer = require('./longlong_buffer');
 /**
  * Kupyna class allows for calculating Kupyna type digest as defined in 
  * Ukrainian DSTU 7564:2014 standard.
+ * @private
  */
 class Kupyna {
     /**
@@ -43,8 +44,7 @@ class Kupyna {
                 this.stateLen = 16;
                 this.stateLenBytes = 128;
                 this.hashBits = hashBits;
-                break;
-                
+                break;      
         }
     }
 

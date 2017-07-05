@@ -5,10 +5,9 @@ var KupynaTrans = require("./kupyna_trans");
 
 /**
  * Creates transformation object for Kupyna-384 and Kupyna-512 algorithm
+ * @private
  */
 class KupynaTransLong extends KupynaTrans{
-
- 
 
     G2(x, y, round) {
         this.G(x, y);

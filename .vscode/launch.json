@@ -9,7 +9,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}/digest_test.js"
+            "program": "${workspaceRoot}/src-test/digest_test.js"
         }
     ]
 }

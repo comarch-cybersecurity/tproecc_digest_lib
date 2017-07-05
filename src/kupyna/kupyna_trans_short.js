@@ -3,7 +3,8 @@
 
 var KupynaTrans = require("./kupyna_trans");
 /**
- * Creates transformation object for Kupyna-256 algorithm
+ * Creates transformation object for Kupyna-256 algorithm.
+ * @private
  */
 
 class KupynaTransShort extends KupynaTrans {

@@ -4,6 +4,7 @@
 
 /**
  * Creates transformation object shared among different variations of Kupyna algorithms.
+ * @private
  */
 class KupynaTrans {
 
